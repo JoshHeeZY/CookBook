@@ -1,86 +1,119 @@
 package com.joshuahee.cookbook.ui.screens
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.joshuahee.cookbook.data.Category
-import com.joshuahee.cookbook.data.FakeRepository
+import com.joshuahee.cookbook.R
 
+// ✅ Recipe data model
+data class Recipe(
+    val name: String,
+    val imageRes: Int,
+    val description: String,
+    val time: String,
+    val difficulty: String
+)
+
+// ✅ Home screen showing recipe list
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
-    val categories = FakeRepository.categories
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+    val sampleRecipes = listOf(
+        Recipe(
+            "Creamy Garlic Parmesan Pasta",
+            R.drawable.pasta,
+            "Delicious creamy pasta with garlic and parmesan sauce.",
+            "25 min",
+            "Easy"
+        ),
+        Recipe(
+            "Classic American Burger",
+            R.drawable.burger,
+            "Juicy grilled burger with melted cheese and fresh toppings.",
+            "20 min",
+            "Easy"
+        ),
+        Recipe(
+            "Homemade Ramen Bowl",
+            R.drawable.ramen,
+            "Savory ramen noodles with soft-boiled eggs and broth.",
+            "30 min",
+            "Medium"
+        )
+    )
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("CookBook", fontWeight = FontWeight.Bold, fontSize = 22.sp) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF9ECCC))
+            )
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(categories) { cat ->
-                CategoryTile(
-                    category = cat,
-                    onClick = {
-                        // For now, just open the first recipe as a demo
-                        val first = FakeRepository.recipes.firstOrNull() ?: return@CategoryTile
-                        navController.navigate("detail/${first.id}")
-                    }
-                )
+            items(sampleRecipes) { recipe ->
+                RecipeCard(recipe) {
+                    navController.navigate("detail/${recipe.name}")
+                }
             }
         }
     }
 }
 
+// ✅ Card component for each recipe
 @Composable
-private fun CategoryTile(
-    category: Category,
-    onClick: () -> Unit
-) {
-    Column(
+fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
+    Card(
         modifier = Modifier
-            .aspectRatio(1f)               // square tiles
-            .background(MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium)
-            .clickable { onClick() }
-            .padding(10.dp)
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
-        // (Optional) You can add an AsyncImage here if you add Coil.
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.small),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = "img", style = MaterialTheme.typography.labelSmall)
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = category.name,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
+        Column {
+            Image(
+                painter = painterResource(id = recipe.imageRes),
+                contentDescription = recipe.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp),
+                contentScale = ContentScale.Crop
             )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = category.count.toString(),
-                style = MaterialTheme.typography.labelSmall
-            )
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(recipe.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(recipe.difficulty, color = Color(0xFF4CAF50), fontWeight = FontWeight.Medium)
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(recipe.description, fontSize = 14.sp, color = Color.Gray)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(recipe.time, fontSize = 12.sp, color = Color(0xFF757575))
+            }
         }
     }
 }

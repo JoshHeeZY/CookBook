@@ -3,8 +3,10 @@ package com.joshuahee.cookbook
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -14,33 +16,37 @@ import com.joshuahee.cookbook.ui.screens.DetailScreen
 import com.joshuahee.cookbook.ui.screens.HomeScreen
 import com.joshuahee.cookbook.ui.theme.CookBookTheme
 
-import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.padding
-
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { CookBookTheme { AppRoot() } }
+        setContent {
+            CookBookTheme {
+                AppRoot()
+            }
+        }
     }
 }
 
 @Composable
 fun AppRoot() {
     val navController = rememberNavController()
-    Scaffold { inner ->
+
+    Scaffold { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = "home",
-            modifier = Modifier.padding(inner)
+            modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen(navController) }
+            composable("home") {
+                HomeScreen(navController = navController)
+            }
+
             composable(
-                route = "detail/{id}",
-                arguments = listOf(navArgument("id") { type = NavType.StringType })
-            ) { backStack ->
-                val id = backStack.arguments?.getString("id") ?: ""
-                DetailScreen(navController, id)
+                route = "detail/{name}",
+                arguments = listOf(navArgument("name") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val name = backStackEntry.arguments?.getString("name") ?: ""
+                DetailScreen(navController = navController, recipeName = name)
             }
         }
     }

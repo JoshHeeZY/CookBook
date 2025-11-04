@@ -1,11 +1,14 @@
 package com.joshuahee.cookbook.ui.screens
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,45 +20,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.joshuahee.cookbook.R
+import com.joshuahee.cookbook.ui.RecipeViewModel
 
-// ✅ Recipe data model
+// ✅ Updated Recipe model supports imageUri
 data class Recipe(
     val name: String,
-    val imageRes: Int,
+    val imageUri: Uri? = null,
     val description: String,
     val time: String,
     val difficulty: String
 )
 
-// ✅ Home screen showing recipe list
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
-
-    val sampleRecipes = listOf(
-        Recipe(
-            "Creamy Garlic Parmesan Pasta",
-            R.drawable.pasta,
-            "Delicious creamy pasta with garlic and parmesan sauce.",
-            "25 min",
-            "Easy"
-        ),
-        Recipe(
-            "Classic American Burger",
-            R.drawable.burger,
-            "Juicy grilled burger with melted cheese and fresh toppings.",
-            "20 min",
-            "Easy"
-        ),
-        Recipe(
-            "Homemade Ramen Bowl",
-            R.drawable.ramen,
-            "Savory ramen noodles with soft-boiled eggs and broth.",
-            "30 min",
-            "Medium"
-        )
-    )
+fun HomeScreen(navController: NavController, recipeViewModel: RecipeViewModel) {
+    val recipes = recipeViewModel.recipes
 
     Scaffold(
         topBar = {
@@ -63,6 +44,11 @@ fun HomeScreen(navController: NavController) {
                 title = { Text("CookBook", fontWeight = FontWeight.Bold, fontSize = 22.sp) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF9ECCC))
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { navController.navigate("addRecipe") }) {
+                Icon(Icons.Default.Add, contentDescription = "Add Recipe")
+            }
         }
     ) { padding ->
         LazyColumn(
@@ -72,7 +58,7 @@ fun HomeScreen(navController: NavController) {
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(sampleRecipes) { recipe ->
+            items(recipes) { recipe ->
                 RecipeCard(recipe) {
                     navController.navigate("detail/${recipe.name}")
                 }
@@ -81,7 +67,6 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
-// ✅ Card component for each recipe
 @Composable
 fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
     Card(
@@ -92,14 +77,20 @@ fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column {
+            val painter = if (recipe.imageUri != null)
+                rememberAsyncImagePainter(recipe.imageUri)
+            else
+                painterResource(id = R.drawable.pasta)
+
             Image(
-                painter = painterResource(id = recipe.imageRes),
+                painter = painter,
                 contentDescription = recipe.name,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp),
                 contentScale = ContentScale.Crop
             )
+
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

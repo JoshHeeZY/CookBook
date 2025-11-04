@@ -7,62 +7,53 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.joshuahee.cookbook.R
+import com.joshuahee.cookbook.ui.RecipeViewModel
 
 @Composable
-fun DetailScreen(navController: NavController, recipeName: String) {
-    val recipe = when (recipeName) {
-        "Creamy Garlic Parmesan Pasta" -> Recipe(
-            "Creamy Garlic Parmesan Pasta",
-            R.drawable.pasta,
-            "Delicious creamy pasta with garlic and parmesan sauce.",
-            "25 min",
-            "Easy"
-        )
-        "Classic American Burger" -> Recipe(
-            "Classic American Burger",
-            R.drawable.burger,
-            "Juicy grilled burger with melted cheese and fresh toppings.",
-            "20 min",
-            "Easy"
-        )
-        "Homemade Ramen Bowl" -> Recipe(
-            "Homemade Ramen Bowl",
-            R.drawable.ramen,
-            "Savory ramen noodles with soft-boiled eggs and broth.",
-            "30 min",
-            "Medium"
-        )
-        else -> null
-    }
+fun DetailScreen(navController: NavController, recipeName: String, recipeViewModel: RecipeViewModel) {
+    val recipe = recipeViewModel.getRecipeByName(recipeName)
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (recipe != null) {
+    if (recipe != null) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val painter = if (recipe.imageUri != null)
+                rememberAsyncImagePainter(recipe.imageUri)
+            else
+                painterResource(id = R.drawable.pasta)
+
             Image(
-                painter = painterResource(id = recipe.imageRes),
+                painter = painter,
                 contentDescription = recipe.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp)
+                    .height(240.dp),
+                contentScale = ContentScale.Crop
             )
+
             Spacer(modifier = Modifier.height(16.dp))
             Text(recipe.name, style = MaterialTheme.typography.headlineSmall)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(recipe.description, style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Cooking time: ${recipe.time}", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(4.dp))
+
+            Text("Ingredients", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(recipe.description, style = MaterialTheme.typography.bodyMedium)
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Cooking Time: ${recipe.time}", style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(6.dp))
             Text("Difficulty: ${recipe.difficulty}", style = MaterialTheme.typography.bodyMedium)
-        } else {
-            Text("Recipe not found.", style = MaterialTheme.typography.bodyLarge)
         }
+    } else {
+        Text("Recipe not found.", modifier = Modifier.padding(16.dp))
     }
 }

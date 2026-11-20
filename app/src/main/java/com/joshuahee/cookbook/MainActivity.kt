@@ -3,11 +3,9 @@ package com.joshuahee.cookbook
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,57 +19,66 @@ import com.joshuahee.cookbook.ui.theme.CookBookTheme
 
 class MainActivity : ComponentActivity() {
 
-    // Create a single instance of RecipeViewModel shared across screens
+    // One RecipeViewModel shared by every screen
     private val recipeViewModel: RecipeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             CookBookTheme {
-                AppRoot(recipeViewModel)
+                CookBookApp(recipeViewModel)
             }
         }
     }
 }
 
+private object Routes {
+    const val HOME = "home"
+    const val ADD_RECIPE = "addRecipe"
+    const val RECIPE_ID = "recipeId"
+    const val DETAIL = "detail/{$RECIPE_ID}"
+    fun detail(recipeId: String) = "detail/$recipeId"
+}
+
 @Composable
-fun AppRoot(recipeViewModel: RecipeViewModel) {
+fun CookBookApp(viewModel: RecipeViewModel) {
     val navController = rememberNavController()
 
-    Scaffold { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = "home",
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            // 🏠 Home Screen
-            composable("home") {
-                HomeScreen(
-                    navController = navController,
-                    recipeViewModel = recipeViewModel
-                )
-            }
+    // Each screen owns its Scaffold, so there is no outer Scaffold here.
+    NavHost(navController = navController, startDestination = Routes.HOME) {
 
-            // 📄 Detail Screen
-            composable(
-                route = "detail/{name}",
-                arguments = listOf(navArgument("name") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val name = backStackEntry.arguments?.getString("name") ?: ""
-                DetailScreen(
-                    navController = navController,
-                    recipeName = name,
-                    recipeViewModel = recipeViewModel
-                )
-            }
+        composable(Routes.HOME) {
+            HomeScreen(
+                viewModel = viewModel,
+                onRecipeClick = { id -> navController.navigate(Routes.detail(id)) },
+                onAddRecipeClick = { navController.navigate(Routes.ADD_RECIPE) }
+            )
+        }
 
-            // ➕ Add Recipe Screen
-            composable("addRecipe") {
-                AddRecipeScreen(
-                    navController = navController,
-                    recipeViewModel = recipeViewModel
-                )
-            }
+        composable(
+            route = Routes.DETAIL,
+            arguments = listOf(navArgument(Routes.RECIPE_ID) { type = NavType.StringType })
+        ) { backStackEntry ->
+            val recipeId = backStackEntry.arguments?.getString(Routes.RECIPE_ID).orEmpty()
+            DetailScreen(
+                recipe = viewModel.getRecipe(recipeId),
+                onBack = { navController.popBackStack() },
+                onDelete = {
+                    navController.popBackStack()
+                    viewModel.deleteRecipe(recipeId)
+                }
+            )
+        }
+
+        composable(Routes.ADD_RECIPE) {
+            AddRecipeScreen(
+                onBack = { navController.popBackStack() },
+                onSave = { recipe ->
+                    viewModel.addRecipe(recipe)
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }
